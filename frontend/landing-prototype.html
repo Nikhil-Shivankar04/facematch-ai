@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nikk Photography — Find Your Photos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400;1,500;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap">
+<style>
+  :root{
+    --ink:#15130F;
+    --surface:#201C17;
+    --surface-2:#2A251E;
+    --paper:#F3EFE4;
+    --brass:#B98B3E;
+    --brass-bright:#D6AC5C;
+    --teal:#3F8C82;
+    --warm-white:#EDE7D9;
+    --muted:#9C9385;
+    --radius:2px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink);
+    color:var(--warm-white);
+    font-family:'General Sans', sans-serif;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none;}
+  ::selection{background:var(--brass);color:var(--ink);}
+
+  /* Grain texture overlay for the whole page - subtle, photographic */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:999;
+    opacity:0.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  :focus-visible{
+    outline:2px solid var(--brass-bright);
+    outline-offset:3px;
+  }
+
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.75rem;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--brass-bright);
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:24px 48px;
+    background:linear-gradient(to bottom, rgba(21,19,15,0.85), transparent);
+    transition:background 0.3s ease;
+  }
+  nav.scrolled{
+    background:rgba(21,19,15,0.92);
+    backdrop-filter:blur(8px);
+    box-shadow:0 1px 0 rgba(185,139,62,0.15);
+  }
+  .logo{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-size:1.35rem;
+    letter-spacing:0.01em;
+  }
+  .logo span{color:var(--brass-bright);}
+  .nav-links{
+    display:flex;
+    gap:36px;
+    align-items:center;
+    font-size:0.92rem;
+  }
+  .nav-links a{
+    opacity:0.85;
+    transition:opacity 0.2s ease;
+  }
+  .nav-links a:hover{opacity:1;}
+  .cta-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.8rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    background:var(--brass);
+    color:var(--ink);
+    padding:11px 22px;
+    border-radius:var(--radius);
+    border:1px solid var(--brass);
+    transition:background 0.2s ease, transform 0.2s ease;
+    display:inline-block;
+  }
+  .cta-btn:hover{background:var(--brass-bright); transform:translateY(-1px);}
+  .cta-btn.ghost{
+    background:transparent;
+    color:var(--warm-white);
+    border:1px solid rgba(237,231,217,0.3);
+  }
+  .cta-btn.ghost:hover{border-color:var(--brass-bright); color:var(--brass-bright);}
+
+  .menu-toggle{
+    display:none;
+    background:none;
+    border:none;
+    color:var(--warm-white);
+    font-size:1.5rem;
+    cursor:pointer;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:100svh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    padding:120px 24px 80px;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 30%, rgba(63,140,130,0.10), transparent),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(185,139,62,0.08), transparent),
+      var(--ink);
+  }
+  .viewfinder{
+    position:relative;
+    max-width:760px;
+    text-align:center;
+    padding:56px 40px;
+  }
+  /* Corner brackets - the signature "lock-on" element */
+  .bracket{
+    position:absolute;
+    width:34px; height:34px;
+    border-color:var(--brass);
+    opacity:0;
+    animation:lockon 1.1s ease-out 0.3s forwards;
+  }
+  .bracket.tl{top:0; left:0; border-top:2px solid; border-left:2px solid;}
+  .bracket.tr{top:0; right:0; border-top:2px solid; border-right:2px solid;}
+  .bracket.bl{bottom:0; left:0; border-bottom:2px solid; border-left:2px solid;}
+  .bracket.br{bottom:0; right:0; border-bottom:2px solid; border-right:2px solid;}
+  @keyframes lockon{
+    0%{opacity:0; transform:scale(1.3);}
+    60%{opacity:1;}
+    100%{opacity:1; transform:scale(1); border-color:var(--teal);}
+  }
+  .hero-eyebrow{
+    opacity:0;
+    animation:fadeUp 0.6s ease-out 0.9s forwards;
+  }
+  .hero h1{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(2.4rem, 5.5vw, 4.4rem);
+    line-height:1.08;
+    margin:20px 0 22px;
+    opacity:0;
+    animation:fadeUp 0.7s ease-out 1.05s forwards;
+  }
+  .hero h1 em{
+    color:var(--teal);
+    font-style:italic;
+  }
+  .hero p{
+    font-size:1.05rem;
+    color:var(--muted);
+    max-width:480px;
+    margin:0 auto 34px;
+    opacity:0;
+    animation:fadeUp 0.7s ease-out 1.2s forwards;
+  }
+  .hero-actions{
+    display:flex;
+    gap:16px;
+    justify-content:center;
+    flex-wrap:wrap;
+    opacity:0;
+    animation:fadeUp 0.7s ease-out 1.35s forwards;
+  }
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(14px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .scroll-hint{
+    position:absolute;
+    bottom:36px; left:50%;
+    transform:translateX(-50%);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.7rem;
+    letter-spacing:0.1em;
+    color:var(--muted);
+    text-transform:uppercase;
+    opacity:0;
+    animation:fadeUp 0.7s ease-out 1.6s forwards;
+  }
+
+  /* ---------- HOW IT WORKS ---------- */
+  .section{
+    padding:120px 24px;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .section-head{
+    text-align:center;
+    max-width:560px;
+    margin:0 auto 72px;
+  }
+  .section-head h2{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(1.8rem, 3.5vw, 2.6rem);
+    margin-top:14px;
+  }
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1px;
+    background:rgba(185,139,62,0.18);
+    border:1px solid rgba(185,139,62,0.18);
+  }
+  .step{
+    background:var(--ink);
+    padding:44px 32px;
+    position:relative;
+  }
+  .step-num{
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--brass);
+    font-size:0.85rem;
+    letter-spacing:0.05em;
+  }
+  .step h3{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:1.4rem;
+    margin:16px 0 10px;
+  }
+  .step p{
+    color:var(--muted);
+    font-size:0.95rem;
+  }
+
+  /* ---------- GALLERY PREVIEW (contact sheet motif) ---------- */
+  .contact-sheet{
+    display:grid;
+    grid-template-columns:repeat(6, 1fr);
+    gap:8px;
+    margin-top:60px;
+  }
+  .frame{
+    aspect-ratio:1;
+    background:var(--surface);
+    border:1px solid rgba(237,231,217,0.08);
+    border-radius:var(--radius);
+    position:relative;
+    overflow:hidden;
+  }
+  .frame::after{
+    content:"";
+    position:absolute; inset:0;
+    background:linear-gradient(135deg, rgba(185,139,62,0.10), rgba(63,140,130,0.10));
+  }
+  .frame.matched{
+    border-color:var(--teal);
+    box-shadow:0 0 0 1px var(--teal), 0 0 18px rgba(63,140,130,0.25);
+  }
+  .frame.matched::before{
+    content:"✓ matched";
+    position:absolute;
+    bottom:6px; left:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.55rem;
+    color:var(--teal);
+    letter-spacing:0.02em;
+    z-index:2;
+  }
+
+  /* ---------- FEATURES ---------- */
+  .features{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:36px;
+    margin-top:20px;
+  }
+  .feature{
+    padding:28px 0;
+    border-top:1px solid rgba(237,231,217,0.12);
+  }
+  .feature .eyebrow{margin-bottom:10px; display:block;}
+  .feature h4{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:1.2rem;
+    margin-bottom:8px;
+  }
+  .feature p{color:var(--muted); font-size:0.92rem;}
+
+  /* ---------- FINAL CTA ---------- */
+  .final-cta{
+    text-align:center;
+    padding:140px 24px;
+    background:linear-gradient(to bottom, transparent, rgba(185,139,62,0.06));
+  }
+  .final-cta h2{
+    font-family:'Newsreader', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(2rem, 4vw, 3rem);
+    margin:16px 0 36px;
+  }
+
+  footer{
+    padding:36px 48px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.75rem;
+    color:var(--muted);
+    border-top:1px solid rgba(237,231,217,0.08);
+    flex-wrap:wrap;
+    gap:12px;
+  }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:1024px){
+    .steps{grid-template-columns:1fr;}
+    .step{border-bottom:1px solid rgba(185,139,62,0.18);}
+    .features{grid-template-columns:1fr 1fr;}
+    .contact-sheet{grid-template-columns:repeat(4,1fr);}
+  }
+  @media (max-width:768px){
+    nav{padding:18px 20px;}
+    .nav-links{
+      position:fixed;
+      top:0; right:0;
+      height:100vh;
+      width:min(78vw, 320px);
+      background:var(--surface);
+      flex-direction:column;
+      justify-content:center;
+      align-items:flex-start;
+      padding:40px;
+      gap:28px;
+      transform:translateX(100%);
+      transition:transform 0.35s ease;
+      box-shadow:-8px 0 24px rgba(0,0,0,0.3);
+    }
+    .nav-links.open{transform:translateX(0);}
+    .menu-toggle{display:block;}
+    .section{padding:80px 20px;}
+    .features{grid-template-columns:1fr;}
+    .contact-sheet{grid-template-columns:repeat(3,1fr);}
+    .viewfinder{padding:40px 16px;}
+  }
+  @media (max-width:480px){
+    .contact-sheet{grid-template-columns:repeat(2,1fr);}
+    .hero-actions{flex-direction:column; width:100%;}
+    .cta-btn{width:100%; text-align:center;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+    .bracket, .hero-eyebrow, .hero h1, .hero p, .hero-actions, .scroll-hint{opacity:1; transform:none;}
+  }
+</style>
+</head>
+<body>
+
+<nav id="mainNav">
+  <a href="#" class="logo">Nikk <span>Photography</span></a>
+  <div class="nav-links" id="navLinks">
+    <a href="#how">How it works</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#packages">Packages</a>
+    <a href="#contact">Contact</a>
+    <a href="#" class="cta-btn ghost">Login</a>
+    <a href="#" class="cta-btn">Book Now</a>
+  </div>
+  <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">☰</button>
+</nav>
+
+<section class="hero">
+  <div class="viewfinder">
+    <span class="bracket tl"></span>
+    <span class="bracket tr"></span>
+    <span class="bracket bl"></span>
+    <span class="bracket br"></span>
+
+    <div class="eyebrow hero-eyebrow">AI · FACE MATCH · INSTANT DELIVERY</div>
+    <h1>Every guest finds<br>their <em>own</em> photos.</h1>
+    <p>Upload thousands of event photos once. Guests take a selfie and instantly see only the shots they're in — no scrolling, no waiting, no manual sorting.</p>
+    <div class="hero-actions">
+      <a href="#" class="cta-btn">Find Your Photos</a>
+      <a href="#how" class="cta-btn ghost">See How It Works</a>
+    </div>
+  </div>
+  <div class="scroll-hint">Scroll ↓</div>
+</section>
+
+<section class="section" id="how">
+  <div class="section-head">
+    <div class="eyebrow">The Process</div>
+    <h2>From upload to download, automatically.</h2>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01 — ADMIN</div>
+      <h3>Upload the event</h3>
+      <p>Drop in hundreds or thousands of photos from the wedding, party, or shoot. Processing happens in the background.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02 — GUEST</div>
+      <h3>Take a selfie</h3>
+      <p>Share one link over WhatsApp. Each guest opens it and captures a quick selfie — no account needed.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03 — AI</div>
+      <h3>Photos, matched</h3>
+      <p>The system finds every photo containing that face and reveals only those — ready to preview and download.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="gallery">
+  <div class="section-head">
+    <div class="eyebrow">What Guests See</div>
+    <h2>Locked on. Yours alone.</h2>
+  </div>
+  <div class="contact-sheet">
+    <div class="frame matched"></div>
+    <div class="frame"></div>
+    <div class="frame matched"></div>
+    <div class="frame"></div>
+    <div class="frame"></div>
+    <div class="frame matched"></div>
+    <div class="frame"></div>
+    <div class="frame matched"></div>
+    <div class="frame"></div>
+    <div class="frame matched"></div>
+    <div class="frame"></div>
+    <div class="frame"></div>
+  </div>
+</section>
+
+<section class="section" id="packages">
+  <div class="section-head">
+    <div class="eyebrow">Built For Real Events</div>
+    <h2>Every detail, handled.</h2>
+  </div>
+  <div class="features">
+    <div class="feature">
+      <span class="eyebrow">PRIVACY</span>
+      <h4>Password-protected links</h4>
+      <p>Every event can require a password before anyone sees a single photo.</p>
+    </div>
+    <div class="feature">
+      <span class="eyebrow">SPEED</span>
+      <h4>Background processing</h4>
+      <p>Upload a thousand photos without waiting — matching runs behind the scenes.</p>
+    </div>
+    <div class="feature">
+      <span class="eyebrow">CONTROL</span>
+      <h4>Auto-expiring events</h4>
+      <p>Set a link to stop working after a chosen date. Your archive, your rules.</p>
+    </div>
+    <div class="feature">
+      <span class="eyebrow">QUALITY</span>
+      <h4>Blur detection</h4>
+      <p>Out-of-focus shots are flagged automatically before guests ever see them.</p>
+    </div>
+    <div class="feature">
+      <span class="eyebrow">DELIVERY</span>
+      <h4>One-tap ZIP downloads</h4>
+      <p>Guests download every matched photo at once, full resolution.</p>
+    </div>
+    <div class="feature">
+      <span class="eyebrow">SHARING</span>
+      <h4>QR code access</h4>
+      <p>Print a QR code at the venue — no typing links on a phone keyboard.</p>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta" id="contact">
+  <div class="eyebrow">Ready When You Are</div>
+  <h2>Stop sending photos<br>one by one.</h2>
+  <a href="#" class="cta-btn">Create Your First Event</a>
+</section>
+
+<footer>
+  <span>Nikk Photography © 2026</span>
+  <span>contact@nikkphotography.com</span>
+</footer>
+
+<script>
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  const toggle = document.getElementById('menuToggle');
+  const links = document.getElementById('navLinks');
+  toggle.addEventListener('click', () => {
+    const isOpen = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', isOpen);
+    toggle.textContent = isOpen ? '✕' : '☰';
+  });
+
+  links.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      links.classList.remove('open');
+      toggle.setAttribute('aria-expanded', false);
+      toggle.textContent = '☰';
+    });
+  });
+</script>
+
+</body>
+</html>
