@@ -5,7 +5,11 @@ import axios from "axios";
 // happens to be logged in as admin in another tab.
 const publicApiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
-  timeout: 60000,
+  // Must exceed the backend's own AI-service timeout (90s) - otherwise
+  // the frontend could give up and show an error even though the
+  // backend request was still legitimately in progress (e.g. waiting
+  // on a cold-started AI service to wake up).
+  timeout: 100000,
 });
 
 export default publicApiClient;

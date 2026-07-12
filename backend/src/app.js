@@ -10,6 +10,16 @@ const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
 
+// Render (and most cloud hosts) put the app behind a reverse proxy,
+// so incoming requests arrive with an X-Forwarded-For header showing
+// the real visitor IP. Express ignores that header by default (to
+// prevent IP spoofing from untrusted sources), which breaks
+// express-rate-limit's ability to key requests by IP. Trusting
+// exactly one hop tells Express "the immediate proxy in front of us
+// is legitimate," without blindly trusting arbitrary forwarded
+// headers from further away.
+app.set("trust proxy", 1);
+
 // Security headers on every response.
 app.use(helmet());
 
