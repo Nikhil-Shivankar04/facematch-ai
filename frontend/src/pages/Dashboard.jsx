@@ -32,6 +32,19 @@ export default function Dashboard() {
     setShowCreateForm(false);
   }
 
+  async function handleDelete(eventId) {
+    const previous = events;
+    // Optimistically remove it immediately so the UI feels responsive,
+    // and roll back if the delete actually fails on the server.
+    setEvents((prev) => prev.filter((e) => e._id !== eventId));
+    try {
+      await apiClient.delete(`/events/${eventId}`);
+    } catch (err) {
+      setEvents(previous);
+      alert(err.response?.data?.message || "Could not delete this event. Try again.");
+    }
+  }
+
   return (
     <div>
       <AdminNav />
@@ -87,7 +100,7 @@ export default function Dashboard() {
             }}
           >
             {events.map((event) => (
-              <EventCard key={event._id} event={event} />
+              <EventCard key={event._id} event={event} onDelete={handleDelete} />
             ))}
           </div>
         )}
