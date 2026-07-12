@@ -30,11 +30,25 @@ MATCH_DISTANCE_THRESHOLD = 0.6
 # point; it may need tuning against real event photos.
 BLUR_VARIANCE_THRESHOLD = 100.0
 
+# Modern phone cameras produce huge images (12MP+, sometimes 40MP+)
+# that offer no real benefit for face detection accuracy but use a
+# lot of memory to process - especially costly on a memory-constrained
+# host. Downscaling to this max dimension before detection keeps
+# memory usage predictable regardless of the original photo size.
+MAX_PROCESSING_DIMENSION = 1600
+
 
 def _load_image_rgb(image_bytes: bytes) -> np.ndarray:
     """Loads image bytes into an RGB numpy array, the format
-    face_recognition expects."""
+    face_recognition expects. Downscales large images first to keep
+    memory usage bounded - this matters a lot on memory-constrained
+    hosting, where processing a full-resolution photo can be enough
+    to crash the process."""
     image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+    if max(image.size) > MAX_PROCESSING_DIMENSION:
+        image.thumbnail((MAX_PROCESSING_DIMENSION, MAX_PROCESSING_DIMENSION), Image.LANCZOS)
+
     return np.array(image)
 
 
