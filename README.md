@@ -2,7 +2,17 @@
 
 AI-powered event photo delivery platform. Photographers upload event photos in bulk; guests find and download only their own photos using face recognition — no manual sorting, no scrolling through hundreds of strangers' photos.
 
-## Status: Phase 5 — QR Codes + ZIP Download (Complete)
+## 🔗 Live Demo
+
+- **App:** https://facematch-ai.vercel.app
+- **Backend API:** https://facematch-backend.onrender.com/api/health
+- **AI Service:** https://facematch-ai-service.onrender.com/health
+
+Guest flow example: log in to the admin dashboard, create an event, upload a few photos of yourself, then open the generated guest link in an incognito window and try the selfie match.
+
+> **Note:** the backend and AI service run on Render's free tier, which spins down after 15 minutes of inactivity. The first request after idle time can take 30-60 seconds to wake up — this is expected, not a bug.
+
+## Status: Fully Deployed (Phase 6 Complete)
 
 Completed so far:
 - **Phase 1:** Admin authentication, Event CRUD, security basics
@@ -10,6 +20,7 @@ Completed so far:
 - **Phase 3:** AI face detection pipeline (Python/FastAPI), blur scoring, HEIC support
 - **Phase 4:** Public guest flow — password gate, selfie matching, individual downloads
 - **Phase 5:** QR code generation for guest links (admin dashboard), and one-tap "Download All" ZIP for guests with multiple matched photos
+- **Phase 6:** Deployed live — React frontend on Vercel, Node backend + Python AI service on Render, MongoDB Atlas + Cloudinary for data/storage
 
 **Known limitation, documented on purpose:** blur detection (`isBlurry`/`blurScore` on each photo) is currently **not** used to filter guest results. During testing, the Laplacian-variance threshold turned out to be miscalibrated for portrait photos specifically — smooth skin and blurred (bokeh) backgrounds naturally score as "low variance" even when perfectly in focus, so the filter was hiding genuinely sharp, correct matches. The blur score is still computed and stored on every photo for future use (e.g., an admin-facing "possibly blurry" badge), but it no longer blocks guests from seeing a match. Properly recalibrating this threshold would need testing against a larger, more varied set of real event photos than we have right now.
 
@@ -160,11 +171,27 @@ Server runs on `http://localhost:5000` by default. Health check: `GET /api/healt
 - **Phase 3:** AI face detection/embedding pipeline — done
 - **Phase 4:** Guest selfie matching flow — done
 - **Phase 5:** QR codes, ZIP download — done
-- **Phase 6:** Polish, Docker Compose, deployment — not started
+- **Phase 6:** Deployed live (Vercel + Render) — done
 
 ## Tech Stack
 
-React (Vite) · Node.js/Express · Python/FastAPI (AI service) · MongoDB · FAISS (similarity search) · S3/Cloudinary · JWT + bcrypt · BullMQ/Redis · Docker Compose
+React (Vite) · Node.js/Express · Python/FastAPI (AI service, `dlib`/`face_recognition`) · MongoDB Atlas · Cloudinary · JWT + bcrypt · Vercel (frontend hosting) · Render (backend + AI service hosting)
+
+## Architecture Decisions
+
+A few deliberate tradeoffs worth calling out, since the reasoning matters as much as the result:
+
+**Separate Python microservice for AI, not a Node ML library.** Face detection/embedding needs Python's ML ecosystem (`dlib`, `opencv`); Node is a poor fit for that workload. Keeping it as an independent service, talking to the backend over HTTP, means it can be scaled, redeployed, or swapped out (e.g. for InsightFace) without touching the rest of the app.
+
+**No background job queue (BullMQ/Redis) yet.** Photo processing runs as a fire-and-forget async call right after upload instead. This is a real, acknowledged limitation — no automatic retry if the server restarts mid-processing — but it avoids adding Redis as an operational dependency before the app's actual scale needs it.
+
+**Blur detection is computed but not used to filter results.** The Laplacian-variance threshold turned out to be miscalibrated for portrait photos specifically — smooth skin and bokeh backgrounds score as "low variance" even when perfectly sharp, so the filter was silently hiding correct matches. Rather than ship a plausible-looking feature that actively made results worse, it was disabled from filtering (the score is still stored for future use) once the miscalibration was confirmed through direct testing against real match distances.
+
+**`dlib-bin` instead of `dlib` in production.** The real `dlib` package has no prebuilt wheels for Linux — every install compiles from C++ source, which reliably exceeded the memory limit on Render's free tier during deployment. Switching to the community `dlib-bin` package (genuine prebuilt binaries) and explicitly excluding `dlib`'s own dependency resolution (`pip install --no-deps`) solved this without giving up the underlying library.
+
+**Images are downscaled before face detection.** A second, separate memory issue showed up at runtime: processing full-resolution phone photos (12MP+) on a memory-constrained host caused the AI service to crash mid-request. Images are resized to a max 1600px dimension before detection — a genuine fix with no meaningful accuracy tradeoff.
+
+**Automatic retry for AI service calls.** Render's free tier spins the AI service down after 15 minutes idle. The first request after that isn't just slow to wake it — it can get an immediate 502 from the platform's proxy before the app finishes booting, which a longer timeout alone doesn't fix. `aiClient.js` retries connection-level failures and 502/503/504s automatically with a short delay, so a cold start recovers on its own instead of surfacing as a failure the user has to notice and retry manually.
 
 ## Planned Future Features
 
