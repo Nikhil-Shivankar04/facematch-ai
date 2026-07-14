@@ -47,4 +47,26 @@ async function processPhoto(photoId, imageBuffer, filename) {
   }
 }
 
-module.exports = { processPhoto };
+// A simple in-process sequential queue, chained off a single promise.
+// Without this, uploading several photos at once fires off that many
+// simultaneous requests to the AI service - fine on a beefy host, but
+// on a memory-constrained free-tier instance, concurrent face
+// detection requests compound peak memory usage and make crashes
+// more likely right when a real batch upload happens. Chaining every
+// job onto this promise means each one fully finishes (success or
+// failure) before the next one starts, regardless of how many
+// uploads triggered around the same time.
+let queue = Promise.resolve();
+
+function enqueueProcessPhoto(photoId, imageBuffer, filename) {
+  queue = queue
+    .then(() => processPhoto(photoId, imageBuffer, filename))
+    .catch(() => {
+      // processPhoto already handles/logs its own errors internally;
+      // this catch exists purely so one failed job can't break the
+      // chain and silently stop every job queued after it.
+    });
+  return queue;
+}
+
+module.exports = { processPhoto, enqueueProcessPhoto };

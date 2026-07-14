@@ -2,7 +2,7 @@ const Photo = require("../models/Photo");
 const Event = require("../models/Event");
 const FaceEmbedding = require("../models/FaceEmbedding");
 const { uploadImageBuffer, deleteImage } = require("../services/storageService");
-const { processPhoto } = require("../jobs/processPhotoJob");
+const { enqueueProcessPhoto } = require("../jobs/processPhotoJob");
 
 /**
  * POST /api/events/:eventId/photos
@@ -39,12 +39,13 @@ async function uploadPhotos(req, res, next) {
           ...uploaded,
         });
 
-        // Fire-and-forget: kick off AI processing but don't make the
-        // admin wait for it. The response goes back as soon as the
-        // photo is stored; processingStatus updates in the background
-        // and the frontend polls/refreshes to see it change.
-        processPhoto(photo._id, file.buffer, file.originalname).catch((err) => {
-          console.error(`Failed to start processing for photo ${photo._id}:`, err.message);
+        // Enqueued onto a sequential in-process queue rather than fired
+        // immediately - see processPhotoJob.js for why. The upload
+        // response still doesn't wait for this; it just guarantees
+        // photos process one at a time in the background instead of
+        // all at once.
+        enqueueProcessPhoto(photo._id, file.buffer, file.originalname).catch((err) => {
+          console.error(`Failed to process photo ${photo._id}:`, err.message);
         });
 
         return photo;
