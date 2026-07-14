@@ -22,7 +22,7 @@ function wait(ms) {
  * running service (e.g. bad input) fails immediately, since retrying
  * that would just waste time on an error that will never succeed.
  */
-async function withRetry(requestFn, { retries = 2, delayMs = 15000 } = {}) {
+async function withRetry(requestFn, { retries = 5, delayMs = 15000 } = {}) {
   let lastError;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
