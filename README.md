@@ -9,8 +9,6 @@
 [![FastAPI](https://img.shields.io/badge/Python-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![Deployed](https://img.shields.io/badge/Deployed-Vercel%20%2B%20Render-000000?logo=vercel&logoColor=white)](#-deployment)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#-license)
-
 [Live Demo](#-live-demo) · [Features](#-features) · [Tech Stack](#%EF%B8%8F-tech-stack) · [Setup](#-getting-started) · [API Docs](#-api-reference) · [Architecture](#-architecture)
 
 </div>
@@ -285,12 +283,6 @@ Contributions, issues, and feature requests are welcome.
 3. Commit your changes (`git commit -m 'Add your feature'`)
 4. Push to the branch (`git push origin feature/your-feature`)
 5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](./LICENSE).
 
 ---
 
