@@ -67,7 +67,7 @@ Built as a complete, deployed product — not a prototype — with a live admin 
 
 </div>
 
-> Replace the placeholders above with real screenshots or a short demo GIF in `/docs/screenshots`.
+
 
 ---
 
