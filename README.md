@@ -1,198 +1,301 @@
-# Nikk Photography
+<div align="center">
 
-AI-powered event photo delivery platform. Photographers upload event photos in bulk; guests find and download only their own photos using face recognition — no manual sorting, no scrolling through hundreds of strangers' photos.
+# 📸 FaceMatch AI - AI Event Photo Delivery Platform
+
+**AI-powered event photo delivery — guests find their own photos instantly, using face recognition.**
+
+[![React](https://img.shields.io/badge/React-Vite-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![FastAPI](https://img.shields.io/badge/Python-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
+[![Deployed](https://img.shields.io/badge/Deployed-Vercel%20%2B%20Render-000000?logo=vercel&logoColor=white)](#-deployment)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#-license)
+
+[Live Demo](#-live-demo) · [Features](#-features) · [Tech Stack](#%EF%B8%8F-tech-stack) · [Setup](#-getting-started) · [API Docs](#-api-reference) · [Architecture](#-architecture)
+
+</div>
+
+---
+
+## 📖 Overview
+
+**FaceMatch AI** is a full-stack event photography platform that eliminates manual photo sorting. Photographers bulk-upload event photos to a central gallery; guests then find and download **only their own photos** by taking a selfie, powered by a dedicated face-recognition microservice.
+
+Built as a complete, deployed product — not a prototype — with a live admin dashboard, a public guest flow, and a production AI pipeline running across three coordinated services.
+
+---
 
 ## 🔗 Live Demo
 
-- **App:** https://facematch-ai.vercel.app
-- **Backend API:** https://facematch-backend.onrender.com/api/health
-- **AI Service:** https://facematch-ai-service.onrender.com/health
+| Service | URL |
+|---|---|
+| 🖥️ Web App | [facematch-ai.vercel.app](https://facematch-ai.vercel.app) |
+| ⚙️ Backend API | [facematch-backend.onrender.com/api/health](https://facematch-backend.onrender.com/api/health) |
+| 🤖 AI Service | [facematch-ai-service.onrender.com/health](https://facematch-ai-service.onrender.com/health) |
 
-Guest flow example: log in to the admin dashboard, create an event, upload a few photos of yourself, then open the generated guest link in an incognito window and try the selfie match.
+**Try it yourself:** Log into the admin dashboard → create an event → upload a few photos of yourself → open the generated guest link in an incognito window → test the selfie match.
 
-> **Note:** the backend and AI service run on Render's free tier, which spins down after 15 minutes of inactivity. The first request after idle time can take 30-60 seconds to wake up — this is expected, not a bug.
+> ⏳ **Note:** The backend and AI service run on Render's free tier and spin down after 15 minutes of inactivity. The first request after idle time may take 30–60 seconds to wake up — this is expected.
 
-## Status: Fully Deployed (Phase 6 Complete)
+---
 
-Completed so far:
-- **Phase 1:** Admin authentication, Event CRUD, security basics
-- **Phase 2:** Bulk photo upload to Cloudinary, thumbnails, cascade delete
-- **Phase 3:** AI face detection pipeline (Python/FastAPI), blur scoring, HEIC support
-- **Phase 4:** Public guest flow — password gate, selfie matching, individual downloads
-- **Phase 5:** QR code generation for guest links (admin dashboard), and one-tap "Download All" ZIP for guests with multiple matched photos
-- **Phase 6:** Deployed live — React frontend on Vercel, Node backend + Python AI service on Render, MongoDB Atlas + Cloudinary for data/storage
+## ✨ Features
 
-**Known limitation, documented on purpose:** blur detection (`isBlurry`/`blurScore` on each photo) is currently **not** used to filter guest results. During testing, the Laplacian-variance threshold turned out to be miscalibrated for portrait photos specifically — smooth skin and blurred (bokeh) backgrounds naturally score as "low variance" even when perfectly in focus, so the filter was hiding genuinely sharp, correct matches. The blur score is still computed and stored on every photo for future use (e.g., an admin-facing "possibly blurry" badge), but it no longer blocks guests from seeing a match. Properly recalibrating this threshold would need testing against a larger, more varied set of real event photos than we have right now.
+- 🔐 **Secure admin authentication** with JWT + bcrypt
+- 🗂️ **Event management** — create, update, and delete photo events
+- 📤 **Bulk photo uploads** to Cloudinary with automatic thumbnail generation
+- 🧠 **AI face detection & embedding pipeline** built with `dlib` / `face_recognition`
+- 🤳 **Selfie-based guest matching** — guests find their photos without browsing the full gallery
+- 📱 **QR code generation** for quick guest access to event galleries
+- 📦 **One-tap "Download All"** as a ZIP for guests with multiple matches
+- 🧹 **Cascade delete** — removing an event cleans up all associated photos
+- 🌐 **Fully deployed** production system (Vercel + Render + MongoDB Atlas + Cloudinary)
 
-## Full Local Dev Setup (all three services)
+---
 
-```bash
-# Terminal 1 - AI service
-cd ai-service
-./venv/Scripts/python.exe -m uvicorn app.main:app --reload --port 8000
+## 🖼️ Screenshots
 
-# Terminal 2 - Backend
-cd backend
-npm run dev
+<div align="center">
 
-# Terminal 3 - Frontend
-cd frontend
-npm run dev
+| Admin Dashboard | Event Detail + QR Code |
+|:---:|:---:|
+| ![Admin Dashboard](./docs/screenshots/admin-dashboard.png) | ![Event Detail](./docs/screenshots/event-detail-qr.png) |
+
+| Guest Selfie Match | Matched Photos Gallery |
+|:---:|:---:|
+| ![Selfie Match](./docs/screenshots/selfie-match.png) | ![Photo Gallery](./docs/screenshots/matched-gallery.png) |
+
+</div>
+
+> Replace the placeholders above with real screenshots or a short demo GIF in `/docs/screenshots`.
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐        ┌──────────────────┐        ┌───────────────────────┐
+│   React (Vite)   │  HTTP  │  Node / Express   │  HTTP  │   Python / FastAPI     │
+│   Frontend       │───────▶│  Backend API      │───────▶│   AI Service           │
+│   (Vercel)       │◀───────│  (Render)         │◀───────│   (Render)             │
+└─────────────────┘        └──────────┬────────┘        └───────────┬───────────┘
+                                       │                              │
+                                       ▼                              ▼
+                            ┌──────────────────┐          ┌────────────────────┐
+                            │  MongoDB Atlas    │          │  dlib /             │
+                            │  (events, users,  │          │  face_recognition   │
+                            │   photo metadata) │          │  (embeddings,       │
+                            └──────────────────┘          │   blur score)       │
+                                       │                   └────────────────────┘
+                                       ▼
+                            ┌──────────────────┐
+                            │   Cloudinary       │
+                            │  (photo storage)   │
+                            └──────────────────┘
 ```
 
-Admin dashboard: `http://localhost:5173` (login with your seeded admin account)
-Guest flow: `http://localhost:5173/e/<shareSlug>` (get the real link + QR code from any event's detail page in the admin dashboard)
+**Flow:** Admin uploads photos → Backend stores metadata in MongoDB and files in Cloudinary → AI service detects faces and generates embeddings → Guest submits a selfie → AI service compares embeddings → Matched photos are returned to the guest.
 
-## Project Status: MVP Complete
+---
 
-All five phases of the original roadmap are done and manually verified end-to-end against real MongoDB Atlas data, a real Cloudinary account, and real face detection/matching. This is a working product, not a partial prototype — an admin can create an event, upload photos, and guests can find and download their own photos via selfie, all the way through.
+## ⚙️ Tech Stack
 
-## Ideas for What's Next (not built, intentionally deferred)
+| Layer | Technology |
+|---|---|
+| Frontend | React (Vite) |
+| Backend API | Node.js, Express.js |
+| AI / Face Recognition | Python, FastAPI, `dlib`, `face_recognition` |
+| Database | MongoDB Atlas |
+| File Storage | Cloudinary |
+| Authentication | JWT + bcrypt |
+| Frontend Hosting | Vercel |
+| Backend & AI Hosting | Render |
 
-- Favorites (guests marking specific photos)
-- Admin analytics (views/downloads per event)
-- Multi-event face search ("find me across every event I've attended") — deferred specifically because it's privacy-sensitive and needs a real consent/deletion design, not just a feature flag
-- Background job queue (BullMQ/Redis) to replace the current fire-and-forget photo processing, for production-grade reliability
-- Recalibrated, better-tested blur detection
-- Mobile app
+---
 
-## AI Service Setup (Python/FastAPI)
+## 📁 Project Structure
 
-**Requires Python 3.11 specifically** — the `dlib`/`face_recognition` libraries this service depends on are not reliably compatible with the newest Python releases (3.13+). If you only have a newer Python installed, install 3.11 alongside it (this does not affect or replace your other Python version).
+```
+facematch-ai/
+├── backend/                 # Node.js / Express API
+│   └── src/
+│       ├── config/          # DB connection, admin seeding
+│       ├── routes/          # Auth, events, photos
+│       └── ...
+├── frontend/                 # React (Vite) app
+│   └── src/
+│       ├── api/client.js     # Axios instance, JWT handling, 401s
+│       ├── context/AuthContext.jsx
+│       ├── components/       # ProtectedRoute, AdminNav, EventCard, PhotoGrid, PhotoUploader, CreateEventForm
+│       ├── pages/            # Login, Dashboard, EventDetail
+│       └── index.css         # Design tokens (brass/teal/ink palette, type scale)
+└── ai-service/                # Python / FastAPI face recognition service
+    └── app/
+        └── main.py
+```
+
+---
+
+## 🚀 Getting Started
+
+Three services run simultaneously for full local functionality: **AI service → Backend → Frontend**.
+
+<details>
+<summary><strong>1️⃣ AI Service (Python / FastAPI)</strong></summary>
+
+> Requires **Python 3.11** specifically — `dlib` / `face_recognition` are not reliably compatible with Python 3.13+. Install 3.11 alongside your existing version if needed.
 
 ```bash
 cd ai-service
 
-# Create a virtual environment using Python 3.11 specifically
+# Create a virtual environment with Python 3.11
 py -3.11 -m venv venv
 
-# Activate it (Windows Git Bash)
+# Activate (Windows Git Bash)
 source venv/Scripts/activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-**Heads up on `dlib` (a dependency of `face_recognition`):** this is the one step most likely to need extra troubleshooting on Windows, since `dlib` sometimes has to compile from source. If `pip install -r requirements.txt` fails specifically on `dlib`, you likely need **CMake** and **Visual Studio Build Tools (C++ workload)** installed first — search "install cmake windows" and "Visual Studio Build Tools C++ desktop development" if you hit this. This is a known friction point of this library, not a bug in our setup.
-
-Once installed, run the service:
-```bash
+# Run the service
 uvicorn app.main:app --reload --port 8000
 ```
 
-You should see `Uvicorn running on http://127.0.0.1:8000`. Test it: `curl http://localhost:8000/health`.
+Verify it's running: `curl http://localhost:8000/health`
 
-**All three services now need to run simultaneously** for the full app to work — three separate terminals:
-1. `cd backend && npm run dev` (port 5000)
-2. `cd frontend && npm run dev` (port 5173)
-3. `cd ai-service && source venv/Scripts/activate && uvicorn app.main:app --reload --port 8000` (port 8000)
+**Troubleshooting `dlib`:** If installation fails while building `dlib`, install **CMake** and **Visual Studio Build Tools (C++ workload)** first — this is a known friction point on Windows, not a bug in this project.
 
-Also add this to your `backend/.env` if it's not already there:
-```
-AI_SERVICE_URL=http://localhost:8000
-```
+</details>
 
-### AI Service Endpoints
-
-| Method | Route | Purpose |
-|---|---|---|
-| GET | `/health` | Health check |
-| POST | `/detect-faces` | Called by Node after each photo upload — detects faces, returns embeddings + blur score |
-| POST | `/match-selfie` | Called during guest matching (Phase 4) — compares a selfie against event face embeddings |
-
-## Frontend Setup
-
-```bash
-cd frontend
-npm install
-cp .env.example .env
-# edit .env if your backend runs on a different URL than localhost:5000
-
-npm run dev
-```
-
-Runs on `http://localhost:5173`. Make sure the backend (`cd backend && npm run dev`) is running at the same time — the frontend calls it directly, there's no mock data.
-
-### Frontend structure
-
-```
-frontend/src/
-├── api/client.js         # Axios instance, auto-attaches JWT, handles 401s
-├── context/AuthContext.jsx
-├── components/           # ProtectedRoute, AdminNav, EventCard, PhotoGrid, PhotoUploader, CreateEventForm
-├── pages/                # Login, Dashboard, EventDetail
-└── index.css             # Design tokens (brass/teal/ink palette, type scale)
-```
-
-## Project Structure
-
-```
-nikk-photography/
-├── backend/       # Node.js/Express API (auth, events, photos, orchestration)
-├── frontend/      # React (Vite) - admin dashboard + guest gallery
-└── ai-service/    # Python/FastAPI - face detection & matching (Phase 3+)
-```
-
-## Backend Setup
+<details>
+<summary><strong>2️⃣ Backend (Node.js / Express)</strong></summary>
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# edit .env: set MONGO_URI and a real JWT_SECRET
+# Edit .env: set MONGO_URI, JWT_SECRET, and AI_SERVICE_URL=http://localhost:8000
 
-# create your admin account (edit the constants in this file first)
+# Create your admin account (edit constants in the file first)
 node src/config/seedAdmin.js
 
 npm run dev
 ```
 
-Server runs on `http://localhost:5000` by default. Health check: `GET /api/health`.
+Runs on `http://localhost:5000` — Health check: `GET /api/health`
 
-### API Endpoints (Phase 1)
+</details>
 
-| Method | Route | Auth required | Purpose |
-|---|---|---|---|
-| POST | `/api/auth/login` | No | Admin login |
-| GET | `/api/auth/me` | Yes | Get current admin profile |
-| POST | `/api/events` | Yes | Create event |
-| GET | `/api/events` | Yes | List my events |
-| GET | `/api/events/:id` | Yes | Get one event |
-| PATCH | `/api/events/:id` | Yes | Update event |
-| DELETE | `/api/events/:id` | Yes | Delete event (and its photos) |
-| POST | `/api/events/:eventId/photos` | Yes | Bulk upload photos (multipart field name: `photos`) |
-| GET | `/api/events/:eventId/photos` | Yes | List photos for an event |
-| DELETE | `/api/events/:eventId/photos/:photoId` | Yes | Delete a single photo |
+<details>
+<summary><strong>3️⃣ Frontend (React / Vite)</strong></summary>
 
-## Roadmap
+```bash
+cd frontend
+npm install
+cp .env.example .env
+# Edit .env if the backend runs on a URL other than localhost:5000
 
-- **Phase 1:** Auth + Event Management — done
-- **Phase 2:** Photo upload + cloud storage — done
-- **Phase 3:** AI face detection/embedding pipeline — done
-- **Phase 4:** Guest selfie matching flow — done
-- **Phase 5:** QR codes, ZIP download — done
-- **Phase 6:** Deployed live (Vercel + Render) — done
+npm run dev
+```
 
-## Tech Stack
+Runs on `http://localhost:5173`. Requires the backend to be running — there is no mock data.
 
-React (Vite) · Node.js/Express · Python/FastAPI (AI service, `dlib`/`face_recognition`) · MongoDB Atlas · Cloudinary · JWT + bcrypt · Vercel (frontend hosting) · Render (backend + AI service hosting)
+- Admin dashboard: `http://localhost:5173`
+- Guest flow: `http://localhost:5173/e/<shareSlug>` (get the live link + QR code from any event's detail page)
 
-## Architecture Decisions
+</details>
 
-A few deliberate tradeoffs worth calling out, since the reasoning matters as much as the result:
+---
 
-**Separate Python microservice for AI, not a Node ML library.** Face detection/embedding needs Python's ML ecosystem (`dlib`, `opencv`); Node is a poor fit for that workload. Keeping it as an independent service, talking to the backend over HTTP, means it can be scaled, redeployed, or swapped out (e.g. for InsightFace) without touching the rest of the app.
+## 📡 API Reference
 
-**No background job queue (BullMQ/Redis) yet.** Photo processing runs as a fire-and-forget async call right after upload instead. This is a real, acknowledged limitation — no automatic retry if the server restarts mid-processing — but it avoids adding Redis as an operational dependency before the app's actual scale needs it.
+### Backend API (`/api`)
 
-**Blur detection is computed but not used to filter results.** The Laplacian-variance threshold turned out to be miscalibrated for portrait photos specifically — smooth skin and bokeh backgrounds score as "low variance" even when perfectly sharp, so the filter was silently hiding correct matches. Rather than ship a plausible-looking feature that actively made results worse, it was disabled from filtering (the score is still stored for future use) once the miscalibration was confirmed through direct testing against real match distances.
+| Method | Route | Auth | Description |
+|---|---|:---:|---|
+| POST | `/api/auth/login` | ❌ | Admin login |
+| GET | `/api/auth/me` | ✅ | Get current admin profile |
+| POST | `/api/events` | ✅ | Create event |
+| GET | `/api/events` | ✅ | List all events |
+| GET | `/api/events/:id` | ✅ | Get a single event |
+| PATCH | `/api/events/:id` | ✅ | Update event |
+| DELETE | `/api/events/:id` | ✅ | Delete event (and its photos) |
+| POST | `/api/events/:eventId/photos` | ✅ | Bulk upload photos (`multipart/form-data`, field: `photos`) |
+| GET | `/api/events/:eventId/photos` | ✅ | List photos for an event |
+| DELETE | `/api/events/:eventId/photos/:photoId` | ✅ | Delete a single photo |
 
-**`dlib-bin` instead of `dlib` in production.** The real `dlib` package has no prebuilt wheels for Linux — every install compiles from C++ source, which reliably exceeded the memory limit on Render's free tier during deployment. Switching to the community `dlib-bin` package (genuine prebuilt binaries) and explicitly excluding `dlib`'s own dependency resolution (`pip install --no-deps`) solved this without giving up the underlying library.
+### AI Service
 
-**Images are downscaled before face detection.** A second, separate memory issue showed up at runtime: processing full-resolution phone photos (12MP+) on a memory-constrained host caused the AI service to crash mid-request. Images are resized to a max 1600px dimension before detection — a genuine fix with no meaningful accuracy tradeoff.
+| Method | Route | Description |
+|---|---|---|
+| GET | `/health` | Health check |
+| POST | `/detect-faces` | Detects faces in an uploaded photo; returns embeddings + blur score |
+| POST | `/match-selfie` | Compares a guest selfie against event face embeddings |
 
-**Automatic retry for AI service calls.** Render's free tier spins the AI service down after 15 minutes idle. The first request after that isn't just slow to wake it — it can get an immediate 502 from the platform's proxy before the app finishes booting, which a longer timeout alone doesn't fix. `aiClient.js` retries connection-level failures and 502/503/504s automatically with a short delay, so a cold start recovers on its own instead of surfacing as a failure the user has to notice and retry manually.
+---
 
-## Planned Future Features
+## 🧠 Architecture Decisions
 
-Favorites, AI best-shot selection, duplicate detection, premium edited galleries, analytics dashboard, multi-event face search, mobile app.
+- **Separate Python microservice for AI**, not a Node ML library — Python's ML ecosystem (`dlib`, `opencv`) is the right tool for the job, and an independent service can be scaled or swapped (e.g. for InsightFace) without touching the rest of the app.
+- **No background job queue yet** — photo processing runs as a fire-and-forget async call after upload. This avoids adding Redis as an operational dependency before it's actually needed, with the tradeoff of no automatic retry on server restart.
+- **`dlib-bin` instead of `dlib` in production** — the standard `dlib` package has no prebuilt Linux wheels, causing source builds that exceeded Render's free-tier memory. Switching to `dlib-bin` (prebuilt binaries) with `--no-deps` resolved this.
+- **Images downscaled before face detection** — full-resolution phone photos (12MP+) caused memory crashes on a constrained host. Resizing to a 1600px max dimension fixed this with no meaningful accuracy loss.
+- **Automatic retry for AI service calls** — Render's free tier can return a 502 during cold start before the service finishes booting. `aiClient.js` retries connection failures and 502/503/504s automatically, so cold starts recover without manual intervention.
+
+---
+
+## ⚠️ Known Limitations
+
+**Blur detection is computed but not currently used to filter results.** Each photo's blur score (`isBlurry` / `blurScore`) is calculated via Laplacian variance and stored, but the threshold proved miscalibrated for portrait photography — smooth skin and bokeh backgrounds naturally register as low-variance, causing sharp, correctly matched photos to be filtered out. Rather than ship a filter that degraded results, it was disabled while the score continues to be collected for future use (e.g. an admin-facing "possibly blurry" indicator). Recalibration requires testing against a larger, more varied dataset of real event photos.
+
+---
+
+## 🌍 Deployment
+
+| Component | Platform |
+|---|---|
+| Frontend | Vercel |
+| Backend API | Render |
+| AI Service | Render |
+| Database | MongoDB Atlas |
+| File Storage | Cloudinary |
+
+---
+
+## 🛣️ Roadmap
+
+- [ ] Favorites (guests marking specific photos)
+- [ ] Admin analytics dashboard (views/downloads per event)
+- [ ] Recalibrated, better-tested blur detection
+- [ ] Background job queue (BullMQ/Redis) for production-grade reliability
+- [ ] Multi-event face search — intentionally deferred; requires a proper consent/deletion design due to privacy sensitivity
+- [ ] AI best-shot selection
+- [ ] Duplicate photo detection
+- [ ] Premium edited photo galleries
+- [ ] Mobile app
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/your-feature`)
+3. Commit your changes (`git commit -m 'Add your feature'`)
+4. Push to the branch (`git push origin feature/your-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the [MIT License](./LICENSE).
+
+---
+
+<div align="center">
+
+Built with ❤️ by **[Nikhil Shivankar]**
+
+</div>
