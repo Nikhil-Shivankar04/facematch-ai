@@ -9,6 +9,8 @@
 [![FastAPI](https://img.shields.io/badge/Python-FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![Deployed](https://img.shields.io/badge/Deployed-Vercel%20%2B%20Render-000000?logo=vercel&logoColor=white)](#-deployment)
+
+
 [Live Demo](#-live-demo) · [Features](#-features) · [Tech Stack](#%EF%B8%8F-tech-stack) · [Setup](#-getting-started) · [API Docs](#-api-reference) · [Architecture](#-architecture)
 
 </div>
